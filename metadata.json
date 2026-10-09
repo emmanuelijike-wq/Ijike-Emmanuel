@@ -1,0 +1,6 @@
+{
+  "name": "ECHO PLAN | School Helper",
+  "description": "Smart school companion for planning studies, managing tasks, building productive habits, and academic growth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
