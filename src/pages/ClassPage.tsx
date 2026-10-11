@@ -5,7 +5,7 @@ import {
   Send, Trash2, ArrowRight, ArrowLeft, Sparkles, Filter, Bell, Settings,
   Phone, School, Eye, Copy, Check, Download, Search, X, FileText,
   MessageSquareHeart, Award, MapPin, Flag, Wifi, Activity,
-  Atom, Palette, BarChart3, TrendingUp, Inbox, Mail
+  Atom, Palette, BarChart3, TrendingUp, Inbox, Mail, Globe, Layers
 } from 'lucide-react';
 import { 
   User, ClassAnnouncement, ClassAssignment, 
@@ -17,6 +17,7 @@ import {
   INITIAL_REGISTERED_STUDENTS
 } from '../data/initialClassData';
 import { INITIAL_MOTIVATIONS } from '../data/initialMotivations';
+import { getStoredCBTExams } from '../data/cbtExamsRegistry';
 import { playSuccessSound } from '../utils/sound';
 import { AdminClassSettingsModal, ClassSettings } from '../components/AdminClassSettingsModal';
 import { ClassMotivationStation } from '../components/ClassMotivationStation';
@@ -25,6 +26,8 @@ import { PracticeExamCenter } from '../components/PracticeExamCenter';
 import { ClassStreamPromptModal } from '../components/ClassStreamPromptModal';
 import { AdminStudentScoreChart } from '../components/AdminStudentScoreChart';
 import { AdminMessagesAndHomeworkDesk } from '../components/AdminMessagesAndHomeworkDesk';
+import { AdminGlobalLoginMonitor } from '../components/AdminGlobalLoginMonitor';
+import { AdminDeployCbtModal } from '../components/AdminDeployCbtModal';
 import { getEffectiveStudentStream, setEffectiveStudentStream } from '../utils/authManager';
 
 interface ClassPageProps {
@@ -60,10 +63,10 @@ export const ClassPage: React.FC<ClassPageProps> = ({
   onAddRegisteredStudent
 }) => {
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'student_admin';
-  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'registered_students' | 'academic_scores' | 'mock_exam' | 'inbox'>(() => {
+  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'registered_students' | 'academic_scores' | 'mock_exam' | 'inbox' | 'live_logins'>(() => {
     try {
       const targetTab = sessionStorage.getItem('echo_plan_active_class_tab');
-      if (targetTab === 'mock_exam' || targetTab === 'registered_students' || targetTab === 'dashboard' || targetTab === 'academic_scores' || targetTab === 'inbox') {
+      if (targetTab === 'mock_exam' || targetTab === 'registered_students' || targetTab === 'dashboard' || targetTab === 'academic_scores' || targetTab === 'inbox' || targetTab === 'live_logins') {
         sessionStorage.removeItem('echo_plan_active_class_tab');
         return targetTab as any;
       }
@@ -72,6 +75,8 @@ export const ClassPage: React.FC<ClassPageProps> = ({
     }
     return 'dashboard';
   });
+
+  const [isDeployCbtModalOpen, setIsDeployCbtModalOpen] = useState(false);
 
   // Automatically check tab on mount/focus
   useEffect(() => {
@@ -772,6 +777,30 @@ export const ClassPage: React.FC<ClassPageProps> = ({
               </button>
 
               <button
+                id="admin-tab-live-student-logins"
+                onClick={() => setActiveAdminTab('live_logins')}
+                className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap min-h-[38px] sm:min-h-[42px] ${
+                  activeAdminTab === 'live_logins'
+                    ? 'bg-emerald-600 text-white shadow-md'
+                    : 'text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+                title="View live student logins from any device across the globe"
+              >
+                <Globe size={16} />
+                <span>🌐 Live Student Logins (Worldwide)</span>
+              </button>
+
+              <button
+                id="admin-tab-carry-out-cbt"
+                onClick={() => setIsDeployCbtModalOpen(true)}
+                className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-extrabold text-purple-900 bg-purple-100 hover:bg-purple-200 border border-purple-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 whitespace-nowrap min-h-[38px] sm:min-h-[42px]"
+                title="Admin: Carry out and deploy CBT exams to other classes (SS1, SS2, SS3, JSS1, JSS2, JSS3)"
+              >
+                <Layers size={16} className="text-purple-700" />
+                <span>🎯 Carry Out CBT to Other Classes</span>
+              </button>
+
+              <button
                 id="admin-tab-ai-pdf-cbt-btn"
                 onClick={() => onNavigate('planner')}
                 className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-extrabold text-[#071a3d] bg-gradient-to-r from-[#62c5fa] to-sky-300 hover:from-sky-300 hover:to-sky-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0 whitespace-nowrap min-h-[38px] sm:min-h-[42px]"
@@ -1203,6 +1232,22 @@ export const ClassPage: React.FC<ClassPageProps> = ({
               </button>
             </div>
             <AdminMessagesAndHomeworkDesk adminName={currentUser?.name || 'Victoria Okajoe'} />
+          </div>
+        ) : isAdmin && activeAdminTab === 'live_logins' ? (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                <Globe className="text-emerald-600" size={16} />
+                <span>Live Worldwide Student Logins & Active Sessions (Any Device)</span>
+              </div>
+              <button
+                onClick={() => setActiveAdminTab('dashboard')}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                ← Return to Class Workspace
+              </button>
+            </div>
+            <AdminGlobalLoginMonitor adminName={currentUser?.name || 'Victoria Okajoe'} />
           </div>
         ) : (
           /* VIEW 2: STANDARD CLASS WORKSPACE & NOTICES */
@@ -2232,6 +2277,21 @@ export const ClassPage: React.FC<ClassPageProps> = ({
         studentClass={registeredStudent?.studentClass || currentUser?.grade || 'SS2'}
         onSelectStream={handleSelectStream}
       />
+
+      {/* Admin: Deploy / Carry Out CBT Exams to Other Classes Modal */}
+      {isAdmin && isDeployCbtModalOpen && (
+        <AdminDeployCbtModal
+          isOpen={isDeployCbtModalOpen}
+          onClose={() => setIsDeployCbtModalOpen(false)}
+          exams={getStoredCBTExams()}
+          currentUser={currentUser}
+          onExamDeployed={() => {
+            setIsDeployCbtModalOpen(false);
+            setActiveAdminTab('mock_exam');
+            playSuccessSound();
+          }}
+        />
+      )}
     </div>
   );
 };

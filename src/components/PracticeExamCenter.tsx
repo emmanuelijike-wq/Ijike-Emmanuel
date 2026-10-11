@@ -4,7 +4,8 @@ import {
   HelpCircle, ChevronRight, ChevronLeft, RotateCcw, 
   Sparkles, Award, FileText, Check, ShieldCheck, Flag, 
   Eye, ListChecks, Printer, BarChart3, ArrowRight, User as UserIcon,
-  ShieldAlert, AlertTriangle, Plus, Trash2, Atom, Palette
+  ShieldAlert, AlertTriangle, Plus, Trash2, Atom, Palette,
+  Globe, Layers, Send
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { 
@@ -25,6 +26,8 @@ import { User, ExamRedFlagStrike, RegisteredStudentItem } from '../types';
 import { playSuccessSound } from '../utils/sound';
 import { getEffectiveStudentStream, setEffectiveStudentStream } from '../utils/authManager';
 import { AdminAiPdfToCbtModal } from './AdminAiPdfToCbtModal';
+import { AdminDeployCbtModal } from './AdminDeployCbtModal';
+import { AdminGlobalLoginMonitor } from './AdminGlobalLoginMonitor';
 
 interface PracticeExamCenterProps {
   currentUser: User | null;
@@ -94,32 +97,39 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
   }, [currentUser]);
 
   const [isAiPdfModalOpen, setIsAiPdfModalOpen] = useState<boolean>(false);
+  const [isDeployModalOpen, setIsDeployModalOpen] = useState<boolean>(false);
+  const [isLiveLoginMonitorOpen, setIsLiveLoginMonitorOpen] = useState<boolean>(false);
+  const [selectedClassFilter, setSelectedClassFilter] = useState<string>('all');
   const [examToDelete, setExamToDelete] = useState<CBTExam | null>(null);
 
   // Available CBT exams:
-  // Science students only see Science CBT exams.
-  // Art students only see Art CBT exams.
-  // Admin sees all and can filter.
+  // Science students only see Science & General CBT exams.
+  // Art students only see Art & General CBT exams.
+  // Admin sees all and can filter by stream & class.
   const visibleExams = useMemo(() => {
     const validList = Array.isArray(exams) && exams.length > 0 ? exams : DEFAULT_CBT_EXAMS;
     let list: CBTExam[];
     if (isAdmin) {
-      if (adminStreamFilter === 'science') list = validList.filter(e => e.stream === 'science');
-      else if (adminStreamFilter === 'art') list = validList.filter(e => e.stream === 'art');
+      if (adminStreamFilter === 'science') list = validList.filter(e => e.stream === 'science' || e.stream === 'general');
+      else if (adminStreamFilter === 'art') list = validList.filter(e => e.stream === 'art' || e.stream === 'general');
       else list = validList;
     } else if (studentStream === 'science') {
-      const sciList = validList.filter(e => e.stream === 'science');
-      list = sciList.length > 0 ? sciList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'science');
+      const sciList = validList.filter(e => e.stream === 'science' || e.stream === 'general');
+      list = sciList.length > 0 ? sciList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'science' || e.stream === 'general');
     } else {
-      const artList = validList.filter(e => e.stream === 'art');
-      list = artList.length > 0 ? artList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'art');
+      const artList = validList.filter(e => e.stream === 'art' || e.stream === 'general');
+      list = artList.length > 0 ? artList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'art' || e.stream === 'general');
+    }
+
+    if (selectedClassFilter !== 'all') {
+      list = list.filter(e => (e.studentClass || '').toUpperCase() === selectedClassFilter.toUpperCase());
     }
 
     if (selectedSubjectFilter !== 'all') {
       return list.filter(e => e.subject.toLowerCase().includes(selectedSubjectFilter.toLowerCase()));
     }
     return list;
-  }, [exams, isAdmin, adminStreamFilter, studentStream, selectedSubjectFilter]);
+  }, [exams, isAdmin, adminStreamFilter, studentStream, selectedClassFilter, selectedSubjectFilter]);
 
   // Active exam with complete null-safety
   const activeExam = useMemo(() => {
@@ -710,6 +720,75 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
             </div>
           </div>
 
+          {/* DEDICATED ENGLISH CBT TEST IN ARTS & SCIENCE CLASSES */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-50 via-pink-50/40 to-amber-50/50 border border-rose-200/90 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center font-black shadow-xs shrink-0">
+                  ✍️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-[#081a3d]">
+                      English Language CBT Examination Papers (Arts & Science Classes)
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-black uppercase border border-rose-200">
+                      WAEC • NECO • JAMB • BECE
+                    </span>
+                  </div>
+                  <p className="text-[11.5px] text-slate-600 mt-0.5">
+                    Official curriculum papers with Reading Comprehension, Lexis & Structure, Literary Figures of Speech, Antonyms/Synonyms, Concord, and Oral Stress.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStudentStream('science');
+                    setSelectedSubjectFilter('English');
+                    setSelectedExamId('ss2-science-english-2026');
+                    playSuccessSound();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                  title="Switch and start Science English CBT Exam"
+                >
+                  <Atom size={13} />
+                  <span>Science English CBT</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStudentStream('art');
+                    setSelectedSubjectFilter('English');
+                    setSelectedExamId('ss2-art-english-lit-2026');
+                    playSuccessSound();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                  title="Switch and start Arts English CBT Exam"
+                >
+                  <Palette size={13} />
+                  <span>Arts English CBT</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSubjectFilter('English');
+                    setSelectedExamId('jss3-english-bece-2026');
+                    playSuccessSound();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                  title="Junior BECE English Mock"
+                >
+                  <span>Junior BECE English</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Exam Paper Switcher & Stream Organizing Sections */}
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -724,7 +803,7 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                 <span className="text-[11px] text-slate-400 font-semibold">
                   {isAdmin 
                     ? 'Administrator View: Displaying both Science and Arts stream curriculum papers' 
-                    : `Organized for ${studentStream === 'science' ? 'Science Students (Math, Chemistry, Biology, Physics, Civic)' : 'Arts Students (Literature, Math, English, Civic)'}`}
+                    : `Organized for ${studentStream === 'science' ? 'Science Students (English, Math, Chemistry, Biology, Physics, Civic)' : 'Arts Students (English, Literature, Math, Civic)'}`}
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -764,6 +843,29 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                     </div>
                     {/* Admin Font Sizing Tool */}
                     <FontSizeSelector />
+                    
+                    {/* Admin: Carry Out CBT to Other Classes */}
+                    <button
+                      type="button"
+                      onClick={() => setIsDeployModalOpen(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                      title="Admin: Carry out and deploy CBT examinations to other classes (SS1, SS2, SS3, JSS1, JSS2, JSS3)"
+                    >
+                      <Layers size={14} />
+                      <span>🎯 Carry Out CBT to Other Classes</span>
+                    </button>
+
+                    {/* Admin: Global Student Logins Tracker */}
+                    <button
+                      type="button"
+                      onClick={() => setIsLiveLoginMonitorOpen(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                      title="Admin: View live student logins from any device all around the globe"
+                    >
+                      <Globe size={14} />
+                      <span>🌐 Live Student Logins</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => setIsAiPdfModalOpen(true)}
@@ -798,6 +900,30 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
               </div>
             </div>
 
+            {/* CLASS FILTER TABS: Filter by Class Level (SS1 - SS3, JSS1 - JSS3) */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Filter by Class Level:</span>
+                <span className="text-[10px] text-slate-400 font-normal">Select a class to view its CBT examinations</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {['all', 'SS3', 'SS2', 'SS1', 'JSS3', 'JSS2', 'JSS1'].map((cls) => (
+                  <button
+                    key={cls}
+                    type="button"
+                    onClick={() => setSelectedClassFilter(cls)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      selectedClassFilter === cls
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {cls === 'all' ? 'All Classes' : `Class ${cls}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* SUBJECT PILL TAGS: Quick filter by Subject */}
             <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80">
               <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
@@ -818,6 +944,17 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                 </button>
                 {(isAdmin || studentStream === 'science') && (
                   <>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSubjectFilter('English')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        selectedSubjectFilter === 'English'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
+                      }`}
+                    >
+                      <span>✍️ English Language (Science)</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setSelectedSubjectFilter('Math')}
@@ -890,6 +1027,17 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                   <>
                     <button
                       type="button"
+                      onClick={() => setSelectedSubjectFilter('English')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        selectedSubjectFilter === 'English'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
+                      }`}
+                    >
+                      <span>✍️ English Language (Arts)</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setSelectedSubjectFilter('Literature')}
                       className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                         selectedSubjectFilter === 'Literature'
@@ -898,17 +1046,6 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                       }`}
                     >
                       <span>📖 Literature</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSubjectFilter('English')}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                        selectedSubjectFilter === 'English'
-                          ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
-                      }`}
-                    >
-                      <span>✍️ English</span>
                     </button>
                     <button
                       type="button"
@@ -930,7 +1067,7 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                           : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
                       }`}
                     >
-                      <span>🏛️ Civic (Arts)</span>
+                      <span>🏛️ Civic</span>
                     </button>
                   </>
                 )}
@@ -2089,6 +2226,37 @@ export const PracticeExamCenter: React.FC<PracticeExamCenterProps> = ({
                 <span>Yes, Delete Exam</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin: Deploy / Carry Out CBT Examinations to Other Classes */}
+      {isAdmin && isDeployModalOpen && (
+        <AdminDeployCbtModal
+          isOpen={isDeployModalOpen}
+          onClose={() => setIsDeployModalOpen(false)}
+          exams={exams}
+          currentUser={currentUser}
+          onExamDeployed={(newExams) => {
+            const list = getStoredCBTExams();
+            setExams(list);
+            if (newExams.length > 0) {
+              setSelectedExamId(newExams[0].id);
+            }
+            setIsDeployModalOpen(false);
+            playSuccessSound();
+          }}
+        />
+      )}
+
+      {/* Admin: Real-time Worldwide Student Login Monitor */}
+      {isAdmin && isLiveLoginMonitorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-5xl my-auto">
+            <AdminGlobalLoginMonitor
+              onClose={() => setIsLiveLoginMonitorOpen(false)}
+              adminName={currentUser?.name || 'Victoria Okajoe'}
+            />
           </div>
         </div>
       )}

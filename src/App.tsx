@@ -21,6 +21,7 @@ import { LeadershipPage } from './pages/LeadershipPage';
 import { ContactPage } from './pages/ContactPage';
 import { ClassPage } from './pages/ClassPage';
 import { AdminRegisteredStudentsModal } from './components/AdminRegisteredStudentsModal';
+import { AdminGlobalLoginMonitor } from './components/AdminGlobalLoginMonitor';
 
 import { 
   TaskItem, HabitItem, User, NigerianStudentRegistration, 
@@ -110,6 +111,7 @@ export default function App() {
   const [isEditNameModalOpen, setIsEditNameModalOpen] = useState<boolean>(false);
   const [isAdminHomeEditorOpen, setIsAdminHomeEditorOpen] = useState<boolean>(false);
   const [isAdminStudentsModalOpen, setIsAdminStudentsModalOpen] = useState<boolean>(false);
+  const [isLiveLoginsModalOpen, setIsLiveLoginsModalOpen] = useState<boolean>(false);
 
   // Registered students roster for the app (persisted in localStorage)
   const [registeredStudents, setRegisteredStudents] = useState<RegisteredStudentItem[]>(() => {
@@ -741,6 +743,7 @@ export default function App() {
             setIsNigeriaModalOpen(true);
           }}
           onOpenAdminStudents={() => setIsAdminStudentsModalOpen(true)}
+          onOpenLiveLogins={() => setIsLiveLoginsModalOpen(true)}
         />
 
         {/* Dynamic Page Rendering */}
@@ -938,6 +941,18 @@ export default function App() {
         onAddStudent={handleAddRegisteredStudent}
         currentUser={currentUser}
       />
+
+      {/* Admin Worldwide Live Student Logins Monitor Modal */}
+      {isLiveLoginsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/65 backdrop-blur-xs animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-5xl my-auto">
+            <AdminGlobalLoginMonitor
+              onClose={() => setIsLiveLoginsModalOpen(false)}
+              adminName={currentUser?.name || 'Victoria Okajoe'}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

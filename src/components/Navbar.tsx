@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Menu, X, Home, Info, Sparkles, Calendar, 
   BarChart3, BookOpen, Users, Mail, ShieldCheck, 
-  LogIn, LogOut, User as UserIcon, Edit3, Lock, UserPlus, Compass, Award
+  LogIn, LogOut, User as UserIcon, Edit3, Lock, UserPlus, Compass, Award, Globe
 } from 'lucide-react';
 import { User } from '../types';
 
@@ -15,6 +15,7 @@ interface NavbarProps {
   onOpenEditName?: () => void;
   onOpenRegistration?: () => void;
   onOpenAdminStudents?: () => void;
+  onOpenLiveLogins?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -25,7 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenEditName,
   onOpenRegistration,
-  onOpenAdminStudents
+  onOpenAdminStudents,
+  onOpenLiveLogins
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -115,6 +117,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Users size={14} className="text-[#62c5fa]" />
                   <span className="hidden xl:inline">Registered Students</span>
                   <span className="xl:hidden">Students</span>
+                </button>
+              )}
+
+              {(currentUser.role === 'admin' || currentUser.role === 'student_admin') && onOpenLiveLogins && (
+                <button
+                  id="nav-admin-live-logins-btn"
+                  onClick={onOpenLiveLogins}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-200 hover:text-white border border-emerald-400/40 text-xs font-black transition-all cursor-pointer shadow-xs"
+                  title="Admin: View student logins across the globe in real time"
+                >
+                  <Globe size={14} className="text-emerald-400" />
+                  <span className="hidden xl:inline">Live Logins (Global)</span>
+                  <span className="xl:hidden">Live Logins</span>
                 </button>
               )}
 
@@ -315,6 +330,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>View All Registered Students (Admin Directory)</span>
               </div>
               <span className="text-[10px] bg-indigo-500/40 px-2 py-0.5 rounded-full">Open</span>
+            </button>
+          )}
+
+          {(currentUser?.role === 'admin' || currentUser?.role === 'student_admin') && onOpenLiveLogins && (
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenLiveLogins();
+              }}
+              className="w-full mb-2 p-3 rounded-2xl bg-emerald-600/30 border border-emerald-400/40 text-white flex items-center justify-between text-xs font-black cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Globe size={16} className="text-emerald-400" />
+                <span>🌐 Live Student Logins (Worldwide Feed)</span>
+              </div>
+              <span className="text-[10px] bg-emerald-500/40 px-2 py-0.5 rounded-full">Live</span>
             </button>
           )}
 

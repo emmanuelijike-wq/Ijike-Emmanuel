@@ -4,11 +4,12 @@ import {
   CheckCircle2, Phone, School, Calendar, FileText, 
   ExternalLink, UserPlus, Eye, ShieldCheck, Copy, Check,
   Wifi, MapPin, Activity, Radio, Flag, AlertTriangle, ShieldAlert,
-  Atom, Palette, TrendingUp, BarChart3
+  Atom, Palette, TrendingUp, BarChart3, Globe
 } from 'lucide-react';
 import { RegisteredStudentItem, User } from '../types';
 import { playSuccessSound } from '../utils/sound';
 import { AdminStudentScoreChart } from './AdminStudentScoreChart';
+import { AdminGlobalLoginMonitor } from './AdminGlobalLoginMonitor';
 
 interface AdminRegisteredStudentsModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const AdminRegisteredStudentsModal: React.FC<AdminRegisteredStudentsModal
   onAddStudent,
   currentUser
 }) => {
-  const [viewTab, setViewTab] = useState<'roster' | 'chart'>('roster');
+  const [viewTab, setViewTab] = useState<'roster' | 'chart' | 'logins'>('roster');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'online' | 'with_timetable' | 'no_timetable' | 'red_flag'>('all');
@@ -198,6 +199,18 @@ export const AdminRegisteredStudentsModal: React.FC<AdminRegisteredStudentsModal
                 <TrendingUp size={13} />
                 <span>Score Chart</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setViewTab('logins')}
+                className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  viewTab === 'logins'
+                    ? 'bg-emerald-400 text-[#081a3d] shadow-sm font-black'
+                    : 'text-sky-200 hover:text-white'
+                }`}
+              >
+                <Globe size={13} />
+                <span>Live Logins</span>
+              </button>
             </div>
 
             <button
@@ -340,10 +353,14 @@ export const AdminRegisteredStudentsModal: React.FC<AdminRegisteredStudentsModal
           </form>
         )}
 
-        {/* Main Body: Either Performance Score Chart or Directory Roster */}
+        {/* Main Body: Either Performance Score Chart, Live Global Logins, or Directory Roster */}
         {viewTab === 'chart' ? (
           <div className="flex-1 overflow-y-auto p-3 sm:p-5">
             <AdminStudentScoreChart registeredStudents={registeredStudents} />
+          </div>
+        ) : viewTab === 'logins' ? (
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+            <AdminGlobalLoginMonitor adminName={currentUser?.name || 'Victoria Okajoe'} />
           </div>
         ) : (
           <>

@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 
@@ -14,6 +15,220 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Global in-memory and persistent file store for real-time worldwide student logins
+interface StudentLoginRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  email: string;
+  studentClass: string;
+  school: string;
+  academicStream?: string;
+  timestamp: string;
+  isoTimestamp: string;
+  deviceType: string;
+  browser: string;
+  ipAddress: string;
+  city: string;
+  country: string;
+  flag: string;
+  status: 'online' | 'active_recently' | 'signed_in';
+}
+
+const LOGINS_FILE_PATH = path.resolve(__dirname, 'student_logins.json');
+
+const INITIAL_SERVER_SEED_LOGINS: StudentLoginRecord[] = [
+  {
+    id: 'log-global-1',
+    studentId: 'std-1',
+    studentName: 'Victoria Okafor',
+    email: 'victoria.okafor@student.echo.edu.ng',
+    studentClass: 'SS3',
+    school: "Queen's College, Yaba, Lagos",
+    academicStream: 'Science',
+    timestamp: 'Today, 12:04:18 PM',
+    isoTimestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
+    deviceType: 'Mobile Phone (Android 14)',
+    browser: 'Chrome Mobile 128',
+    ipAddress: '102.89.44.112',
+    city: 'Lagos',
+    country: 'Nigeria',
+    flag: '🇳🇬',
+    status: 'online'
+  },
+  {
+    id: 'log-global-2',
+    studentId: 'std-2',
+    studentName: 'Samuel Chukwueze',
+    email: 'samuel.c@student.echo.edu.ng',
+    studentClass: 'SS2',
+    school: "King's College Lagos",
+    academicStream: 'Science',
+    timestamp: 'Today, 11:48:02 AM',
+    isoTimestamp: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
+    deviceType: 'Windows 11 Laptop',
+    browser: 'Google Chrome 129',
+    ipAddress: '105.112.98.24',
+    city: 'Abuja',
+    country: 'Nigeria',
+    flag: '🇳🇬',
+    status: 'online'
+  },
+  {
+    id: 'log-global-3',
+    studentId: 'std-3',
+    studentName: 'Amina Bello',
+    email: 'amina.bello@student.echo.edu.ng',
+    studentClass: 'SS3',
+    school: 'Federal Government Girls College, Bwari',
+    academicStream: 'Art',
+    timestamp: 'Today, 11:15:40 AM',
+    isoTimestamp: new Date(Date.now() - 48 * 60 * 1000).toISOString(),
+    deviceType: 'Apple iPhone (iOS 18)',
+    browser: 'Mobile Safari 18',
+    ipAddress: '197.210.55.70',
+    city: 'Port Harcourt',
+    country: 'Nigeria',
+    flag: '🇳🇬',
+    status: 'active_recently'
+  },
+  {
+    id: 'log-global-4',
+    studentId: 'std-4',
+    studentName: 'Chinedu Eze',
+    email: 'chinedu.eze@student.echo.edu.ng',
+    studentClass: 'SS1',
+    school: 'Loyola Jesuit College',
+    academicStream: 'Science',
+    timestamp: 'Today, 10:30:12 AM',
+    isoTimestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+    deviceType: 'MacBook Air (macOS Sonoma)',
+    browser: 'Safari 17.5',
+    ipAddress: '82.165.197.10',
+    city: 'London',
+    country: 'United Kingdom',
+    flag: '🇬🇧',
+    status: 'signed_in'
+  },
+  {
+    id: 'log-global-5',
+    studentId: 'std-5',
+    studentName: 'Fatima Abubakar',
+    email: 'fatima.abubakar@student.echo.edu.ng',
+    studentClass: 'SS2',
+    school: 'Corona Secondary School, Agbara',
+    academicStream: 'Art',
+    timestamp: 'Today, 09:42:00 AM',
+    isoTimestamp: new Date(Date.now() - 140 * 60 * 1000).toISOString(),
+    deviceType: 'iPad Pro (iPadOS 17)',
+    browser: 'Mobile Safari 17',
+    ipAddress: '102.90.114.88',
+    city: 'Ibadan',
+    country: 'Nigeria',
+    flag: '🇳🇬',
+    status: 'signed_in'
+  }
+];
+
+function loadPersistedLogins(): StudentLoginRecord[] {
+  try {
+    if (fs.existsSync(LOGINS_FILE_PATH)) {
+      const data = fs.readFileSync(LOGINS_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not read persisted logins, using seeds:', err);
+  }
+  return [...INITIAL_SERVER_SEED_LOGINS];
+}
+
+function persistLogins(records: StudentLoginRecord[]) {
+  try {
+    fs.writeFileSync(LOGINS_FILE_PATH, JSON.stringify(records, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Could not write persisted logins file:', err);
+  }
+}
+
+let globalStudentLogins: StudentLoginRecord[] = loadPersistedLogins();
+
+// Real-time Global Student Login Endpoints
+app.get('/api/student-logins', (_req, res) => {
+  const onlineCount = globalStudentLogins.filter(
+    (l) => l.status === 'online' || (Date.now() - new Date(l.isoTimestamp).getTime()) < 15 * 60 * 1000
+  ).length;
+
+  res.json({
+    success: true,
+    logs: globalStudentLogins,
+    totalCount: globalStudentLogins.length,
+    onlineCount,
+    serverTime: new Date().toISOString()
+  });
+});
+
+app.post('/api/student-logins/record', (req, res) => {
+  try {
+    const body = req.body || {};
+    const rawIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '102.89.44.10';
+    const clientIp = rawIp.split(',')[0].trim().replace(/^::ffff:/, '');
+
+    const now = new Date();
+    const timeFormatted = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    const dateFormatted = now.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const newRecord: StudentLoginRecord = {
+      id: body.id || `log-svr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      studentId: body.studentId || `std-${Date.now()}`,
+      studentName: body.studentName || 'Student Candidate',
+      email: body.email || 'student@echo.edu.ng',
+      studentClass: body.studentClass || 'SS2',
+      school: body.school || 'Echo Plan Secondary School',
+      academicStream: body.academicStream || 'Science',
+      timestamp: body.timestamp || `Today, ${timeFormatted} (${dateFormatted})`,
+      isoTimestamp: now.toISOString(),
+      deviceType: body.deviceType || 'Web Device',
+      browser: body.browser || 'Browser',
+      ipAddress: body.ipAddress || clientIp,
+      city: body.city || 'Lagos',
+      country: body.country || 'Nigeria',
+      flag: body.flag || '🇳🇬',
+      status: 'online'
+    };
+
+    // Prepend and keep up to 500 records
+    globalStudentLogins = [newRecord, ...globalStudentLogins.filter(l => l.id !== newRecord.id)].slice(0, 500);
+    persistLogins(globalStudentLogins);
+
+    return res.json({
+      success: true,
+      record: newRecord,
+      totalCount: globalStudentLogins.length
+    });
+  } catch (err: any) {
+    console.error('Error recording student login:', err);
+    return res.status(500).json({ error: 'Failed to record student login' });
+  }
+});
+
+app.delete('/api/student-logins', (_req, res) => {
+  globalStudentLogins = [...INITIAL_SERVER_SEED_LOGINS];
+  persistLogins(globalStudentLogins);
+  res.json({ success: true, message: 'Reset logins to default seed records' });
+});
 
 // Server-side Gemini client
 const ai = new GoogleGenAI({

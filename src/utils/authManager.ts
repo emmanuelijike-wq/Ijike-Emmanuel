@@ -1,5 +1,6 @@
 import { User, RegisteredStudentItem } from '../types';
 import { INITIAL_REGISTERED_STUDENTS } from '../data/initialClassData';
+import { logStudentLoginEvent } from './loginAuditManager';
 
 export interface PermanentAdminAccount {
   id: string; // 'admin-1'
@@ -467,6 +468,18 @@ export const registerStudentMember = (data: {
     const updatedList = [studentItem, ...existing];
     localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(updatedList));
 
+    try {
+      logStudentLoginEvent({
+        id: studentItem.id,
+        name: studentItem.studentName,
+        email: studentItem.email,
+        grade: studentItem.studentClass,
+        school: studentItem.school
+      });
+    } catch {
+      // ignore
+    }
+
     return {
       success: true,
       user: studentUser,
@@ -579,6 +592,19 @@ export const attemptStudentLogin = (credentials: {
 
   // Update last login
   student.lastLoginAt = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Log real-time student login event for global administrator monitoring
+  try {
+    logStudentLoginEvent({
+      id: student.id,
+      name: student.studentName,
+      email: student.email || emailInput,
+      grade: student.studentClass,
+      school: student.school
+    });
+  } catch {
+    // ignore
+  }
 
   const studentUser: User = {
     id: student.id,

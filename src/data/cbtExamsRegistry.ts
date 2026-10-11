@@ -107,6 +107,39 @@ export const DEFAULT_CBT_EXAMS: CBTExam[] = [
     badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
     questions: CIVIC_EDUCATION_CBT_QUESTIONS
   },
+  {
+    id: 'ss2-science-english-2026',
+    title: 'SS2 Science English Language CBT Exam — Lexis, Structure & Technical Comprehension',
+    subject: 'English',
+    studentClass: 'SS2',
+    stream: 'science',
+    durationMinutes: 30,
+    description: 'Core English Language CBT Examination for Science Students. 50 authentic WAEC/JAMB format questions: Scientific Reading Comprehension, Lexis & Structure, Sentence Completion, Idiomatic Usage, Synonyms & Antonyms, and Oral English Stress Patterns.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
+    id: 'ss1-science-english-2026',
+    title: 'SS1 Science English Language CBT Exam — Grammar & Composition Essentials',
+    subject: 'English',
+    studentClass: 'SS1',
+    stream: 'science',
+    durationMinutes: 30,
+    description: 'Comprehensive foundational English paper for SS1 Science Class. Testing Lexis & Structure, Parts of Speech, Clauses, and Oral English Vowels & Consonants.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
+    id: 'ss3-science-english-2026',
+    title: 'SS3 Science English Language CBT Exam — WAEC/JAMB Final Distinction Mock',
+    subject: 'English',
+    studentClass: 'SS3',
+    stream: 'science',
+    durationMinutes: 30,
+    description: 'Exit examination for SS3 Science candidates preparing for WAEC, NECO, and UTME examinations. 50 rigorous questions covering high-level lexis, idioms, and reading analysis.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
 
   // ==========================================
   // ART EXAMS (For Art Students)
@@ -146,6 +179,28 @@ export const DEFAULT_CBT_EXAMS: CBTExam[] = [
     questions: SS2_ENGLISH_MOCK_QUESTIONS
   },
   {
+    id: 'ss1-art-english-2026',
+    title: 'SS1 Arts English Language & Literature CBT Examination',
+    subject: 'English',
+    studentClass: 'SS1',
+    stream: 'art',
+    durationMinutes: 30,
+    description: 'SS1 Arts syllabus English CBT paper: Literary devices, prose comprehension, basic rhetoric, grammatical concord, and lexis.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
+    id: 'ss3-art-english-2026',
+    title: 'SS3 Arts English Language & Advanced Literature Final Mock',
+    subject: 'English',
+    studentClass: 'SS3',
+    stream: 'art',
+    durationMinutes: 30,
+    description: 'SS3 Final graduation CBT mock for Arts students: Advanced literary analysis, poetry appreciation, complex vocabulary, and WAEC/JAMB format question bank.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
     id: 'ss2-art-civic-2026',
     title: 'SS2 Civic Education & Social Studies — Art Stream CBT Paper',
     subject: 'Civic',
@@ -155,6 +210,44 @@ export const DEFAULT_CBT_EXAMS: CBTExam[] = [
     description: 'Constitutional law, democratic institutions, human rights, civic responsibilities, and public leadership CBT examination for arts and humanities students.',
     badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
     questions: CIVIC_EDUCATION_CBT_QUESTIONS
+  },
+
+  // ==========================================
+  // JUNIOR SECONDARY CBT EXAMS (JSS1, JSS2, JSS3)
+  // For Admin to carry out CBT exams across other classes
+  // ==========================================
+  {
+    id: 'jss3-english-bece-2026',
+    title: 'JSS3 English Language & Literature (BECE / Junior WAEC Mock Exam)',
+    subject: 'English',
+    studentClass: 'JSS3',
+    stream: 'general',
+    durationMinutes: 30,
+    description: 'National Junior Certificate BECE Examination mock paper: Reading comprehension passages, grammar, tense agreements, nouns, adjectives, figures of speech, and oral phonetics.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
+    id: 'jss2-english-cbt-2026',
+    title: 'JSS2 English Language & Composition CBT Examination',
+    subject: 'English',
+    studentClass: 'JSS2',
+    stream: 'general',
+    durationMinutes: 30,
+    description: 'Intermediate Junior Secondary English paper: Direct and indirect speech, active/passive voice, punctuation rules, vocabulary development, and guided reading comprehension.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
+  },
+  {
+    id: 'jss1-english-cbt-2026',
+    title: 'JSS1 English Language Foundations & Grammar CBT Examination',
+    subject: 'English',
+    studentClass: 'JSS1',
+    stream: 'general',
+    durationMinutes: 30,
+    description: 'Foundational Junior Secondary English exam: Parts of speech (nouns, pronouns, verbs, adverbs, prepositions), spelling mastery, simple reading comprehension, and vowel sounds.',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+    questions: SS2_ENGLISH_MOCK_QUESTIONS
   }
 ];
 
@@ -259,12 +352,12 @@ export const getCBTExamsForStream = (
   const all = getStoredCBTExams();
   if (isAdmin) return all;
   if (stream === 'science') {
-    const scienceList = all.filter(e => e.stream === 'science');
-    return scienceList.length > 0 ? scienceList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'science');
+    const scienceList = all.filter(e => e.stream === 'science' || e.stream === 'general');
+    return scienceList.length > 0 ? scienceList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'science' || e.stream === 'general');
   }
   if (stream === 'art') {
-    const artList = all.filter(e => e.stream === 'art');
-    return artList.length > 0 ? artList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'art');
+    const artList = all.filter(e => e.stream === 'art' || e.stream === 'general');
+    return artList.length > 0 ? artList : DEFAULT_CBT_EXAMS.filter(e => e.stream === 'art' || e.stream === 'general');
   }
   return all;
 };
